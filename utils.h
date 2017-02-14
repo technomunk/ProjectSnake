@@ -9,7 +9,6 @@
 #include <stdint.h>
 
 typedef uint8_t byte;
-void delay(int c);
 
 void spi_initialize();
 byte spi(byte data);

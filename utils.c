@@ -1,10 +1,5 @@
 #include "utils.h"
 
-void delay(int c) {
-	int i;
-	for(i = c; i > 0; i--);
-}
-
 /*
 	Initializes all required ports for SPI protocol
 	===============================================

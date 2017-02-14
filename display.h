@@ -8,6 +8,7 @@
 #define PS_DISPLAY
 
 #include "utils.h"
+#include "time.h"
 
 
 #define PSD_VDD PORTFbits.RF6
@@ -47,6 +48,9 @@ void display_clear();
 // Updates a single pixel in the buffer
 // call display_display() to display changes
 void display_update(int x, int y, byte flag);
+
+// BUGGED and DEPRECIATED
+void display_updatei(int x, int y, byte flag);
 
 // Displayes the image
 void display_show();

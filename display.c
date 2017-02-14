@@ -34,7 +34,7 @@ void display_initialize() {
 	
 	// Reset the display
 	PSD_PORT_RESET &= ~PSD_MASK_RESET;
-	delay(10);
+	time_wait(1);
 	PSD_PORT_RESET |= PSD_MASK_RESET;
 	
 	// Set charge pump
@@ -47,7 +47,7 @@ void display_initialize() {
 	
 	// Apply voltage
 	PSD_PORT_VBATT &= PSD_MASK_VBATT;
-	delay(10000000);	// hope for 100 ms
+	time_wait(100);
 	
 	// Remap the display so that the origin is in left top corner
 	spi(0xA1);	// remap columns
@@ -73,8 +73,8 @@ void display_terminate() {
 	spi(0xAE);
 	
 	PSD_PORT_VBATT &= ~PSD_MASK_VBATT;
-	delay(10000000);	// hope for 100 ms
-	PSD_PORT_VDD &= PSD_MASK_VDD
+	time_wait(100);
+	PSD_PORT_VDD &= PSD_MASK_VDD;
 }
 
 /*
@@ -94,7 +94,7 @@ void display_clear() {
 		spi(0x22);
 		spi(page);
 		
-		spi(0xF);
+		spi(0x0);
 		spi(0x10);
 		
 		PSD_PORT_COMMAND |= PSD_MASK_COMMAND;
@@ -118,12 +118,43 @@ void display_update(int x, int y, byte flag) {
 	
 	int page = y / 8;
 	y %= 8;
-	flag &= 1;
 	
 	if (flag)
 		display_buffer[x][page] |= (1 << y);
 	else
 		display_buffer[x][page] &= ~(1 << y);
+}
+
+/*
+	Updates a single pixel immediatly
+	Extremely BUGGED
+	AVOID AT ALL COSTS
+	=================================
+	by
+		Grigory Glukhov
+*/
+void display_updatei(int x, int y, byte flag) {
+	
+	int page = y / 8;
+	y %= 8;
+	
+	if (flag)
+		display_buffer[x][page] |= (1 << y);
+	else
+		display_buffer[x][page] &= ~(1 << y);
+	
+	PSD_PORT_COMMAND &= ~PSD_MASK_COMMAND;
+		
+	// Send page number
+	spi(0x22);
+	spi(page);
+	
+	// Send row number
+	spi(x & 0xF);					// low nibble
+	spi(0x10 | ((x >> 4) & 0xF));	// high nibble
+	
+	PSD_PORT_COMMAND |= PSD_MASK_COMMAND;
+	spi(display_buffer[x][page]);
 }
 
 /*
@@ -143,7 +174,7 @@ void display_show() {
 		spi(0x22);
 		spi(page);
 		
-		spi(0xF);
+		spi(0x0);
 		spi(0x10);
 		
 		PSD_PORT_COMMAND |= PSD_MASK_COMMAND;
