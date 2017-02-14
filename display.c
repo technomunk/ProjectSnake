@@ -187,7 +187,6 @@ void display_show() {
 
 	PSD_PORT_COMMAND |= PSD_MASK_COMMAND;
 	
-	for (id = 0; id < PSD_SIZE_BUFFER; id++)
-		spi(display_buffer[id]);
+	spi_array(display_buffer, PSD_SIZE_BUFFER);
 		
 }

@@ -32,3 +32,20 @@ byte spi(byte data) {
 	while(!(SPI2STAT & 0x01));
 	return SPI2BUF;
 }
+
+/*
+	Sends a whole array of bytes over SPI
+	=====================================
+	by
+		Grigory Glukhov
+*/
+byte spi_array(byte * pData, unsigned int dataSize) {
+	byte tmp;
+	while (dataSize--) {
+		while(!(SPI2STAT & 0x08));
+		SPI2BUF = *pData++;
+		while(!(SPI2STAT & 0x01));
+		tmp = SPI2BUF;
+	}
+	return tmp;
+}
