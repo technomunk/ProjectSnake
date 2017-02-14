@@ -37,8 +37,8 @@ void time_initialize() {
 	
 	IPCSET(2) = 0x1F;		// set interrupt priority to max
 	
-	TMR2 = 0;									// reset timer
-	PR2 = PST_SINGLE_MS * PST_PERIOD_MS / 256;	// set period
+	TMR2 = 0;										// reset timer
+	PR2 = PST_SINGLE_MS * PST_TICK_PERIOD_MS / 256;	// set period
 
 	T2CONSET = ((1 << 15)		// enable timer
 				| (7 << 4));	// prescale 1:256
@@ -52,10 +52,10 @@ void time_initialize() {
 */
 void time_wait(unsigned int ms) {
 	
-	if (ms % PST_PERIOD_MS)
-		ms = ms / PST_PERIOD_MS + 1;
+	if (ms % PST_TICK_PERIOD_MS)
+		ms = ms / PST_TICK_PERIOD_MS + 1;
 	else
-		ms /= PST_PERIOD_MS;
+		ms /= PST_TICK_PERIOD_MS;
 	
 	unsigned int lastTick = time_tick;
 	
