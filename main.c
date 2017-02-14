@@ -36,7 +36,7 @@
 extern void loop();
 
 int bLooping = 1;
-int x = 0, y = 0, dirX = 1, dirY = 1;
+int x = 1, y = 1, dirX = 1, dirY = 1;
 unsigned int lastTime = 0;
 
 // ===================
