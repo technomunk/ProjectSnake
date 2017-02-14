@@ -54,15 +54,19 @@ int main() {
 	
 	display_clear();
 	
+	// set up borders
 	for (x = 0; x < 128; x++) {
-		display_update(x, 0, 1);
-		display_update(x, 31, 1);
+		display_put(x, 0, 1);
+		display_put(x, 31, 1);
 	}
 	
 	for (y = 1; y < 31; y++) {
-		display_update(0, y, 1);
-		display_update(127, y, 1);
+		display_put(0, y, 1);
+		display_put(127, y, 1);
 	}
+	
+	display_setBrightness(0x8F);
+	display_show();
 	
 	x = 1;
 	y = 1;
@@ -82,6 +86,7 @@ void loop() {
 	if (time_tick == lastTime)
 		return;
 	
+	// clear last position
 	display_update(x, y, 0);
 	
 	x += dirX;
@@ -98,7 +103,8 @@ void loop() {
 	else if (y == 1)
 		dirY = 1;
 	
+	// set new position
 	display_update(x, y, 1);
-	display_show();
+	
 	lastTime = time_tick;
 }
