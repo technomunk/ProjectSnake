@@ -15,15 +15,25 @@
 
 extern unsigned int time_tick;
 
-// Handles interrupts
-// This function will need to be moved elsewher if you want to expant amount of handled interrupts
-// For the purpose of the game we will use polling for other events
+/*
+	Handles interrupts
+	This function will need to be moved elsewhere if you want to expand amount of handled interrupts
+	For the purpose of the game we will use polling for other events
+*/
 void interrupt_handler();
 
-// Initializes all needed ports and stuff
+/*
+	Sets up all necessary ports for the timer
+*/
 void time_initialize();
 
-// Haults the operation until the time has passed
+/*
+	Haults the operation until the time has passed
+	IE returns only when the given amount of time has passed
+	
+	Arguments:
+		unsigned int	- time in ms to wait
+*/
 void time_wait(unsigned int ms);
 
 #endif // !PS_TIME

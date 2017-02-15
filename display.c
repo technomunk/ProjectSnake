@@ -30,7 +30,7 @@ void display_initialize() {
 	PSD_PORT_VDD &= ~PSD_MASK_VDD;
 	
 	// display off
-	spi(0xAE);
+	spi_byte(0xAE);
 	
 	// Reset the display
 	PSD_PORT_RESET &= ~PSD_MASK_RESET;
@@ -38,30 +38,31 @@ void display_initialize() {
 	PSD_PORT_RESET |= PSD_MASK_RESET;
 	
 	// Set charge pump
-	spi(0x8D);
-	spi(0x14);
+	spi_byte(0x8D);
+	spi_byte(0x14);
 	
 	// Set Pre-charge period
-	spi(0xD9);
-	spi(0xF1);
+	spi_byte(0xD9);
+	spi_byte(0xF1);
 	
 	// Apply voltage
 	PSD_PORT_VBATT &= PSD_MASK_VBATT;
 	time_wait(100);
 	
 	// Remap the display so that the origin is in left top corner
-	spi(0xA1);	// remap columns
-	spi(0xC8);	// remap rows
+	spi_byte(0xA1);	// remap columns
+	spi_byte(0xC8);	// remap rows
 	
 	// COM related stuff
-	spi(0xDA);	// COM config
-	spi(0x20);	// sequential COM
+	spi_byte(0xDA);	// COM config
+	spi_byte(0x20);	// sequential COM
 	
-	spi(0x20);
-	spi(0x00);
+	// Memory adressing mode
+	spi_byte(0x20);	// set mem adressing mode command
+	spi_byte(0x00);	// horizontal sequential
 	
 	// Display on command
-	spi(0xAF);
+	spi_byte(0xAF);
 }
 
 /*
@@ -73,7 +74,7 @@ void display_initialize() {
 */
 void display_terminate() {
 	// display off
-	spi(0xAE);
+	spi_byte(0xAE);
 	
 	PSD_PORT_VBATT &= ~PSD_MASK_VBATT;
 	time_wait(100);
@@ -103,7 +104,7 @@ void display_clear() {
 	by
 		Grigory Glukhov
 */
-void display_put(int x, int y, byte flag) {
+void display_put(int x, int y, int flag) {
 	
 	int page = (y / 8) * PSD_COLUMN_COUNT;
 	y %= 8;
@@ -120,18 +121,18 @@ void display_put(int x, int y, byte flag) {
 	by
 		Grigory Glukhov
 */
-void display_update(int x, int y, byte flag) {
+void display_update(int x, int y, int flag) {
 	
 	PSD_PORT_COMMAND &= ~PSD_MASK_COMMAND;
 	
 	int page = y / 8;
 	
 	// Send page number here
-	spi(0xB0 | page);
+	spi_byte(0xB0 | page);
 	
 	// Send row number
-	spi(x & 0xF);					// low nibble
-	spi(0x10 | ((x >> 4) & 0xF));	// high nibble
+	spi_byte(x & 0xF);					// low nibble
+	spi_byte(0x10 | ((x >> 4) & 0xF));	// high nibble
 	
 	
 	page *= PSD_COLUMN_COUNT;
@@ -144,7 +145,7 @@ void display_update(int x, int y, byte flag) {
 	
 	
 	PSD_PORT_COMMAND |= PSD_MASK_COMMAND;
-	spi(display_buffer[page + x]);
+	spi_byte(display_buffer[page + x]);
 }
 
 /*
@@ -156,8 +157,8 @@ void display_update(int x, int y, byte flag) {
 void display_setBrightness(byte b) {
 	PSD_PORT_COMMAND &= ~PSD_MASK_COMMAND;
 		
-	spi(0x81);
-	spi(b);
+	spi_byte(0x81);
+	spi_byte(b);
 }
 
 /*
@@ -175,15 +176,15 @@ void display_show() {
 	PSD_PORT_COMMAND &= ~PSD_MASK_COMMAND;
 	
 	// Reset page
-	spi(0x22);	// send set row command
-	spi(0);		// starting page
-	spi(3);		// ending page
+	spi_byte(0x22);		// send set row command
+	spi_byte(0);		// starting page
+	spi_byte(3);		// ending page
 	
 	
 	// Reset column
-	spi(0x21);	// send set column command
-	spi(0);		// starting column
-	spi(127);	// ending column
+	spi_byte(0x21);		// send set column command
+	spi_byte(0);		// starting column
+	spi_byte(127);		// ending column
 
 	PSD_PORT_COMMAND |= PSD_MASK_COMMAND;
 	

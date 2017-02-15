@@ -26,7 +26,7 @@ void spi_initialize() {
 	by
 		Grigory Glukhov
 */
-byte spi(byte data) {
+byte spi_byte(byte data) {
 	while(!(SPI2STAT & 0x08));
 	SPI2BUF = data;
 	while(!(SPI2STAT & 0x01));
