@@ -37,6 +37,7 @@ extern void loop();
 
 int bLooping = 1;
 int x, y, dirX = 1, dirY = 1;
+byte col = 0x00, colJmp = 0x20;
 unsigned int lastTime = 0;
 
 // ===================
@@ -53,19 +54,13 @@ int main() {
 	display_initialize();
 	
 	display_clear();
+	display_show();
 	
 	// set up borders
-	for (x = 0; x < 128; x++) {
-		display_put(x, 0, 1);
-		display_put(x, 31, 1);
-	}
+	display_invert();
+	display_clearRect(1, 1, 126, 30);
 	
-	for (y = 1; y < 31; y++) {
-		display_put(0, y, 1);
-		display_put(127, y, 1);
-	}
-	
-	display_setBrightness(0x8F);
+	display_setBrightness(col);
 	display_show();
 	
 	x = 1;
@@ -87,24 +82,32 @@ void loop() {
 		return;
 	
 	// clear last position
-	display_update(x, y, 0);
+	display_clearRect(x, y, 31, 8);
 	
 	x += dirX;
 	y += dirY;
 	// check horizontal movement
-	if (x == 126)
-		dirX = -1;
-	else if (x == 1)
-		dirX = 1;
+	if (x == 96 || x == 1) {
+		dirX = -dirX;
+		col += colJmp;
+		if (col == 0xE0 || col == 0x0)
+			colJmp = -colJmp;
+	}
 	
 	// check vertical movement
-	if (y == 30)
-		dirY = -1;
-	else if (y == 1)
-		dirY = 1;
+	if (y == 23 || y == 1) {
+		dirY = -dirY;
+		col += colJmp;
+		if (col == 0xE0 || col == 0x0)
+			colJmp = -colJmp;
+	}
+	
+	display_setBrightness(col);
 	
 	// set new position
-	display_update(x, y, 1);
+	display_putString(x, y, "Bump");
+	
+	display_showRect(x - 1, y - 1, 33, 10);
 	
 	lastTime = time_tick;
 }
