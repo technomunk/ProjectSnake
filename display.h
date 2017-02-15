@@ -40,29 +40,59 @@
 //	dev comment: use single dimensional buffer address to speed up writing to it, sacrificing some of the readability and single_pixel addressing
 extern byte display_buffer[PSD_SIZE_BUFFER];
 
-//	Initializes everything necessary for the display to work
-//	Should be called before any other functios are
+/*
+	Initializes everything necessary for the display to work
+	Should be called before any other functios are
+	
+	Requires time_initialize() and spi_initialize() to be called prior in order to function
+*/
 void display_initialize();
 
-//	Terminates the display in a proper manner
+/*
+	Terminates the display in a proper manner
+*/
 void display_terminate();
 
-//	Clears the display buffer to black
-//	to clear the display use display_show() right after
+/*
+	Clears the display buffer to black
+	to clear the display use display_show() right after
+*/
 void display_clearBuffer();
 
-//	Updates a single pixel in the buffer
-//	Does NOT update the display
-//	Use this with display_show() afterwards if you need to set up a multitude of pixels
-void display_put(int x, int y, byte flag);
+/*
+	Updates a single pixel in the buffer
+	Does NOT update the display
+	Use this with display_show() afterwards if you need to set up a multitude of pixels
+	
+	Arguments:
+		int		- horizontal pixel coordinate
+		int		- vertical pixel coordinate
+		int		- boolean value to which set the pixel
+*/
+void display_put(int x, int y, int flag);
 
-//	Displayes the buffered image onto the screen
+/*
+	Displayes the buffered image onto the screen
+*/
 void display_show();
 
-//	Updates a single pixel on the display
-void display_update(int x, int y, byte flag);
+/*
+	Updates a single pixel on the display
+	This function is slower than display_put() on its own, but faster than a display_put() + display_show()
+	
+	Arguments:
+		int		- horizontal pixel coordinate
+		int		- vertical pixel coordinate
+		int		- boolean value to which set the pixel
+*/
+void display_update(int x, int y, int flag);
 
-//	Changes display brightness level
+/*
+	Changes display brightness level
+	
+	Arguments:
+		byte	- new brightness level
+*/
 void display_setBrightness(byte brightness);
 
 
