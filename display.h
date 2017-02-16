@@ -6,18 +6,13 @@
 	most methods DON'T perform argument legality checks, so they may break if you screw up
 */
 
-#ifndef PS_DISPLAY
-#define PS_DISPLAY
+#ifndef _PS_DISPLAY
+#define _PS_DISPLAY
 
 #include "utils.h"
 #include "time.h"
 #include "font.h"
 
-
-//#define PSD_VDD PORTFbits.RF6
-//#define PSD_VBATT PORTFbits.RF5
-//#define PSD_COMMAND PORTFbits.RF4
-//#define PSD_RESET PORTGbits.RG9
 
 #define PSD_PORT_VDD PORTF
 #define PSD_MASK_VDD 0x40
@@ -137,4 +132,4 @@ void display_putString(int x, int y, char * pString);
 void display_setBrightness(byte brightness);
 
 
-#endif	// !PS_DISPLAY
+#endif	// !_PS_DISPLAY

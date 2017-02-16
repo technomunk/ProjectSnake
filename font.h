@@ -2,8 +2,8 @@
 	A static declaration of the font, basically hardcoding the font
 */
 
-#ifndef PS_FONT
-#define PS_FONT
+#ifndef _PS_FONT
+#define _PS_FONT
 
 #define PSF_CHAR_COUNT 128
 #define PSF_CHAR_HEIGHT 8	// different size is not even planned to be supported
@@ -147,4 +147,4 @@ static unsigned char font[] = {
 
 
 
-#endif // !PS_FONT
+#endif // !_PS_FONT

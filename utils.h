@@ -2,8 +2,8 @@
 	A helper utility library
 */
 
-#ifndef PS_UTILITY
-#define PS_UTILITY
+#ifndef _PS_UTILITY
+#define _PS_UTILITY
 
 #include <pic32mx.h>
 #include <stdint.h>
@@ -39,4 +39,4 @@ byte spi_byte(byte data);
 */
 byte spi_array(byte * pData, unsigned int dataSize);
 
-#endif // !PS_UTILITY
+#endif // !_PS_UTILITY
