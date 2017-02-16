@@ -2,8 +2,8 @@
 	A high level time and timer related library
 */
 
-#ifndef PS_TIME
-#define PS_TIME
+#ifndef _PS_TIME
+#define _PS_TIME
 
 #include <pic32mx.h>
 
@@ -36,4 +36,4 @@ void time_initialize();
 */
 void time_wait(unsigned int ms);
 
-#endif // !PS_TIME
+#endif // !_PS_TIME

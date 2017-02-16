@@ -21,8 +21,8 @@
 // === INCLUDES ===
 // ================
 
-#include <pic32mx.h>
-
+// Display includes all we need
+// But everything has define guards, so you can still include them here
 #include "display.h"
 
 
