@@ -29,8 +29,8 @@ void display_initialize() {
 	PSD_PORT_DATA_COMMAND &= ~PSD_MASK_DATA;	// set spi as commands
 	PSD_PORT_VDD &= ~PSD_MASK_VDD;				// reset voltage
 	
-	// display off
-	spi_byte(0xAE);
+	// Display off
+	spi_byte(PSD_CMD_DISPLAY_OFF);
 	
 	// Reset the display
 	PSD_PORT_RESET &= ~PSD_MASK_RESET;
@@ -38,11 +38,11 @@ void display_initialize() {
 	PSD_PORT_RESET |= PSD_MASK_RESET;
 	
 	// Set charge pump
-	spi_byte(0x8D);
+	spi_byte(PSD_CMD_SET_CHARGE_PUMP);
 	spi_byte(0x14);
 	
 	// Set Pre-charge period
-	spi_byte(0xD9);
+	spi_byte(PSD_CMD_SET_PRE_CHARGE);
 	spi_byte(0xF1);
 	
 	// Apply voltage
@@ -50,19 +50,19 @@ void display_initialize() {
 	time_wait(100);
 	
 	// Remap the display so that the origin is in left top corner
-	spi_byte(0xA1);	// remap columns
-	spi_byte(0xC8);	// remap rows
+	spi_byte(PSD_CMD_MAP_COLUMNS);	// remap columns
+	spi_byte(PSD_CMD_MAP_ROWS);		// remap rows
 	
-	// COM related stuff
-	spi_byte(0xDA);	// COM config
-	spi_byte(0x20);	// sequential COM
+	// COM (decoding) settings
+	spi_byte(PSD_CMD_SET_COM);
+	spi_byte(PSD_COM_LEFT_TOP);
 	
 	// Memory adressing mode
-	spi_byte(0x20);	// set mem adressing mode command
-	spi_byte(0x00);	// horizontal sequential
+	spi_byte(PSD_CMD_SET_ADDRESS_MODE);
+	spi_byte(PSD_ADDRESS_MODE_HORIZONTAL);
 	
-	// Display on command
-	spi_byte(0xAF);
+	// Display on
+	spi_byte(PSD_CMD_DISPLAY_ON);
 }
 
 /*
@@ -73,8 +73,8 @@ void display_initialize() {
 		Grigory Glukhov
 */
 void display_terminate() {
-	// display off
-	spi_byte(0xAE);
+	// Display off
+	spi_byte(PSD_CMD_DISPLAY_OFF);
 	
 	PSD_PORT_VBATT &= ~PSD_MASK_VBATT;
 	time_wait(100);
@@ -120,6 +120,11 @@ void display_invert() {
 */
 void display_put(int x, int y, int flag) {
 	
+#if PSD_VALIDATE_ARGS
+	x %= PSD_DISPLAY_WIDTH;
+	y %= PSD_DISPLAY_HEIGHT;
+#endif	// PSD_VALIDATE_ARGS
+	
 	int page = (y / 8) * PSD_COLUMN_COUNT;
 	y %= 8;
 	
@@ -137,16 +142,21 @@ void display_put(int x, int y, int flag) {
 */
 void display_update(int x, int y, int flag) {
 	
+#if PSD_VALIDATE_ARGS
+	x %= PSD_DISPLAY_WIDTH;
+	y %= PSD_DISPLAY_HEIGHT;
+#endif	// PSD_VALIDATE_ARGS
+	
 	PSD_PORT_DATA_COMMAND &= ~PSD_MASK_DATA;
 	
 	int page = y / 8;
 	
 	// Send page number here
-	spi_byte(0xB0 | page);
+	spi_byte(PSD_CMD_SET_PAGE_UNSAFE(page));	// use unsafe, if VALIDATE_ARGS it is safe, if not - not supposed to be
 	
 	// Send row number
-	spi_byte(x & 0xF);					// low nibble
-	spi_byte(0x10 | ((x >> 4) & 0xF));	// high nibble
+	spi_byte(PSD_CMD_SET_COL_LOW(x));	// low nibble
+	spi_byte(PSD_CMD_SET_COL_HIGH_UNSAFE(x));	// high nibble	// use unsafe, if VALIDATE_ARGS it is safe, if not - not supposed to be
 	
 	
 	page *= PSD_COLUMN_COUNT;
@@ -171,7 +181,7 @@ void display_update(int x, int y, int flag) {
 void display_setBrightness(byte b) {
 	PSD_PORT_DATA_COMMAND &= ~PSD_MASK_DATA;
 		
-	spi_byte(0x81);
+	spi_byte(PSD_CMD_SET_BRIGHTNESS);
 	spi_byte(b);
 }
 
@@ -184,6 +194,17 @@ void display_setBrightness(byte b) {
 		Grigory Glukhov
 */
 void display_clearRect(int x, int y, int w, int h) {
+	
+#if PSD_VALIDATE_ARGS
+	x %= PSD_DISPLAY_WIDTH;
+	y %= PSD_DISPLAY_HEIGHT;
+	
+	if (x + w > PSD_DISPLAY_WIDTH)
+		w = PSD_DISPLAY_WIDTH - x;
+	
+	if (y + h > PSD_DISPLAY_HEIGHT)
+		h = PSD_DISPLAY_HEIGHT - y;
+#endif	// PSD_VALIDATE_ARGS
 	
 	byte col = 1;
 	
@@ -242,6 +263,17 @@ void display_clearRect(int x, int y, int w, int h) {
 */
 void display_showRect(int x, int y, int w, int h) {
 	
+#if PSD_VALIDATE_ARGS
+	x %= PSD_DISPLAY_WIDTH;
+	y %= PSD_DISPLAY_HEIGHT;
+	
+	if (x + w > PSD_DISPLAY_WIDTH)
+		w = PSD_DISPLAY_WIDTH - x;
+	
+	if (y + h > PSD_DISPLAY_HEIGHT)
+		h = PSD_DISPLAY_HEIGHT - y;
+#endif	// PSD_VALIDATE_ARGS
+	
 	h += y;
 	
 	if (h % 8 == 0)
@@ -253,16 +285,15 @@ void display_showRect(int x, int y, int w, int h) {
 	
 	PSD_PORT_DATA_COMMAND &= ~PSD_MASK_DATA;
 	
-	// Reset page
-	spi_byte(0x22);		// send set row command
-	spi_byte(y);		// starting page
-	spi_byte(h - 1);		// ending page
-	
-	
 	// Reset column
-	spi_byte(0x21);		// send set column command
+	spi_byte(PSD_CMD_SET_COLUMN);		// send set column command
 	spi_byte(x);		// starting column
 	spi_byte(x + w - 1);	// ending column
+	
+	// Reset page
+	spi_byte(PSD_CMD_SET_PAGE);		// send set row command
+	spi_byte(y);		// starting page
+	spi_byte(h - 1);		// ending page
 
 	PSD_PORT_DATA_COMMAND |= PSD_MASK_DATA;
 	
@@ -272,6 +303,11 @@ void display_showRect(int x, int y, int w, int h) {
 }
 
 void display_putString(int x, int y, char * pString) {
+	
+#if PSD_VALIDATE_ARGS
+	x %= PSD_DISPLAY_WIDTH;
+	y %= PSD_DISPLAY_HEIGHT;
+#endif	// PSD_VALIDATE_ARGS
 	
 	if (y % 8) {
 		
@@ -285,6 +321,13 @@ void display_putString(int x, int y, char * pString) {
 		// Do until null char (0x0)
 		while (*pString) {
 			for (i = 0; i < PSF_CHAR_WIDTH; i++) {
+#if PSD_VALIDATE_ARGS
+				if (x + i >= PSD_DISPLAY_WIDTH)
+					break;
+				else if (y + PSF_CHAR_HEIGHT)
+					break;
+#endif	// PSD_VALIDATE_ARGS
+				
 #if PSF_CHECK_STRING
 				display_buffer[y + x] |= font[((*pString) % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i] << rt;
 				display_buffer[yb + x] |= font[((*pString) % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i] >> rb;
@@ -305,6 +348,12 @@ void display_putString(int x, int y, char * pString) {
 		// Do until null char (0x0)
 		while (*pString) {
 			for (i = 0; i < PSF_CHAR_WIDTH; i++) {
+#if PSD_VALIDATE_ARGS
+				if (x + i >= PSD_DISPLAY_WIDTH)
+					break;
+				else if (y + PSF_CHAR_HEIGHT)
+					break;
+#endif	// PSD_VALIDATE_ARGS
 #if PSF_CHECK_STRING
 				display_buffer[y + x] |= font[((*pString) % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i];
 #else
@@ -331,16 +380,15 @@ void display_show() {
 	
 	PSD_PORT_DATA_COMMAND &= ~PSD_MASK_DATA;
 	
-	// Reset page
-	spi_byte(0x22);		// send set row command
-	spi_byte(0);		// starting page
-	spi_byte(3);		// ending page
-	
-	
 	// Reset column
-	spi_byte(0x21);		// send set column command
-	spi_byte(0);		// starting column
-	spi_byte(127);		// ending column
+	spi_byte(PSD_CMD_SET_COLUMN);	// send set column command
+	spi_byte(0);					// starting column
+	spi_byte(127);					// ending column
+	
+	// Reset page
+	spi_byte(PSD_CMD_SET_PAGE);		// send set row command
+	spi_byte(0);					// starting page
+	spi_byte(3);					// ending page
 
 	PSD_PORT_DATA_COMMAND |= PSD_MASK_DATA;
 	

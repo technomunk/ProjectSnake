@@ -14,6 +14,55 @@
 #include "font.h"
 
 
+// false	- maximize performance, but functions become unsafe (access violations may occur on illegal arguments and so on)
+// true 	- sacrifice some performance, but make functions safe (cast illegal args into legal onces, bail early on illegal cases)
+#define PSD_VALIDATE_ARGS 1
+
+
+// This is SPI commands for the display
+// I got them at https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
+//
+// As I'm too lazy to copy the stuff I don't use this will lack some of the commands
+
+#define PSD_CMD_DISPLAY_ON 0xAF
+#define PSD_CMD_DISPLAY_OFF 0xAE
+
+#define PSD_CMD_SET_CHARGE_PUMP 0x8D
+#define PSD_CMD_SET_PRE_CHARGE 0xD9
+
+#define PSD_CMD_SET_COM 0xDA
+#define PSD_COM_LEFT_TOP 0x20		// this actually means, row 0 is top and allow column remap
+
+#define PSD_CMD_SET_ADDRESS_MODE 0x20
+#define PSD_ADDRESS_MODE_HORIZONTAL 0x00	// from left to right, wrap around at right
+#define PSD_ADDRESS_MODE_VERTICAL 0x01		// from top to bottom, wrap around at bottom
+#define PSD_ADDRESS_MODE_PAGE 0x02			// from left to right
+
+// Tri-byte command (send starting column after and then ending column)
+#define PSD_CMD_SET_COLUMN 0x21
+// Tri-byte command (send starting page after and then ending page)
+#define PSD_CMD_SET_PAGE 0x22
+
+// Picked this from https://github.com/is1200-example-projects/hello-display
+// As official documentation is too dark about this exact command
+#define PSD_CMD_MAP_COLUMNS 0xA1
+// Another fake, as this actually means COM horizontal mapping mode and depends on COM_MODE to be 0x2x to function
+#define PSD_CMD_MAP_ROWS 0xC8
+
+// Not actually used, because if VALIDATE_ARGS is true then we will make sure we use safe values
+// Otherwise we're not interested in safe, we're interested in fast
+#define PSD_CMD_SET_PAGE_SAFE(x) (0xB0 | (x & 0xF))
+#define PSD_CMD_SET_PAGE_UNSAFE(x) (0xB0 | x)
+
+#define PSD_CMD_SET_COL_LOW(x) (x & 0xF)
+
+// Not actually used, because if VALIDATE_ARGS is true then we will make sure we use safe values
+// Otherwise we're not interested in safe, we're interested in fast
+#define PSD_CMD_SET_COL_HIGH_SAFE(x) (0x10 | ((x >> 4) & 0xF))
+#define PSD_CMD_SET_COL_HIGH_UNSAFE(x) (0x10 | (x >> 4))
+
+#define PSD_CMD_SET_BRIGHTNESS 0x81
+
 #define PSD_PORT_VDD PORTF
 #define PSD_MASK_VDD 0x40
 
@@ -26,8 +75,11 @@
 #define PSD_PORT_RESET PORTG
 #define PSD_MASK_RESET 0x200
 
+
+#define PSD_DISPLAY_WIDTH 128
+#define PSD_DISPLAY_HEIGHT 32
 #define PSD_PAGE_COUNT 4
-#define PSD_COLUMN_COUNT 128
+#define PSD_COLUMN_COUNT 128	// theoretically could be different with PSD_DISPLAY_WIDTH in different mapping conditions, but not in our case
 #define PSD_SIZE_BUFFER (PSD_PAGE_COUNT * PSD_COLUMN_COUNT)
 
 //	Buffer of display data
