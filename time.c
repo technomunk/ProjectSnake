@@ -38,10 +38,10 @@ void time_initialize() {
 	IPCSET(2) = 0x1F;		// set interrupt priority to max
 	
 	TMR2 = 0;										// reset timer
-	PR2 = PST_SINGLE_MS * PST_TICK_PERIOD_MS / 256;	// set period
+	PR2 = PST_SINGLE_MS * PST_TICK_PERIOD_MS / 128;	// set period
 
 	T2CONSET = ((1 << 15)		// enable timer
-				| (7 << 4));	// prescale 1:256
+				| (6 << 4));	// prescale 1:128
 }
 
 /*

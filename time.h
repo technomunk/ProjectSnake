@@ -9,9 +9,9 @@
 
 // This will depend on the clock in question, for Uno32 board the clock is 80MHz
 #define PST_SINGLE_MS 80000
-// Feel free to redifine this to any non-zero multiple of 2
+// Feel free to redifine this
 // to calculate ticks per second divede 1000 by this number
-#define PST_TICK_PERIOD_MS 20	// we use 20 to cap the frame rate at 50
+#define PST_TICK_PERIOD_MS 25	// we use 25 to cap the frame rate at 40
 
 extern unsigned int time_tick;
 
