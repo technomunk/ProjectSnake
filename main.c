@@ -33,11 +33,6 @@
 
 #define SNAKE_SIZE 8
 
-// Undefine first, so we don't get compiler warnings
-#undef PSD_VALIDATE_ARGS
-// Redefine as false to get MAXIMUM PERFORMANCE and showcase the cleanliness of game logic
-#define PSD_VALIDATE_ARGS 0		// set this to false, because we're interested in maximum performance
-
 extern void loop();
 
 int bLooping = 1;
