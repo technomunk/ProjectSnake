@@ -351,8 +351,6 @@ void display_putString(int x, int y, char * pString) {
 #if PSD_VALIDATE_ARGS
 				if (x + i >= PSD_DISPLAY_WIDTH)
 					break;
-				else if (y + PSF_CHAR_HEIGHT)
-					break;
 #endif	// PSD_VALIDATE_ARGS
 #if PSF_CHECK_STRING
 				display_buffer[y + x] |= font[((*pString) % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i];
