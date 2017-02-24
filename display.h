@@ -153,8 +153,8 @@ void display_show();
 	to clear it on display call display_show() or display_updateRect() right after
 	
 	Arguments:
-		int		- horizontal coordinate of left top corner
-		int		- vertical coordinate of left top corner
+		int		- horizontal coordinate of left top target corner
+		int		- vertical coordinate of left top target corner
 		int		- width of the rectange
 		int		- height of the rectangle
 */
@@ -165,8 +165,8 @@ void display_clearRect(int x, int y, int w, int h);
 	Will use minimal amount of data transfer
 	
 	Arguments:
-		int		- horizontal coordinate of left top corner
-		int		- vertical coordinate of left top corner
+		int		- horizontal coordinate of left top targete corner
+		int		- vertical coordinate of left top target corner
 		int		- width of the rectange
 		int		- height of the rectangle
 */
@@ -177,11 +177,21 @@ void display_showRect(int x, int y, int w, int h);
 	Call display_show() to display it on the screen
 	
 	Arguments:
-		int 	- horizontal coordinate of left top corner
-		int		- vertical coordinate of left top corner
+		int 	- horizontal coordinate of left top target corner
+		int		- vertical coordinate of left top target corner
 		char *	- pointer to a null-terminated string of characters to display
 */
 void display_putString(int x, int y, char * pString);
+
+/*
+	Puts the given single char into the buffer
+	
+	Arguments:
+		int 	- horizontal coordinate of left top target corner
+		int		- vertical coordinate of left top target corner
+		char
+*/
+void display_putChar(int x, int y, char c);
 
 /*
 	Changes display brightness level

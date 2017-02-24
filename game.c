@@ -241,21 +241,17 @@ int game_updateWalls(unsigned char id) {
 	if (lastWalls == id)
 		return 1;
 	
-	int i, check;
+	int i, check, hit = 1;
 	if ((lastWalls & 8) != (id & 8)) {
 		check = id & 8;
 		for (i = 0; i < PSD_DISPLAY_HEIGHT; i++) {
 			if (PSG_FIELD_IS_SNAKE(game_getField(i, 0)) || PSG_FIELD_IS_SNAKE(game_getField(i, PSD_DISPLAY_HEIGHT - 1)))
 				if (check)
-					return 0;
-				else
-					goto skip8;
+					hit = 0;
 			game_setField(0, i, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			game_setField(PSD_DISPLAY_WIDTH - 1, i, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			display_put(0, i, check);
 			display_put(PSD_DISPLAY_WIDTH - 1, i, check);
-			
-			skip8:;
 		}
 	}
 
@@ -264,9 +260,7 @@ int game_updateWalls(unsigned char id) {
 		for (i = 0; i < PSD_DISPLAY_WIDTH / 3 + 1; i++) {
 			if (PSG_FIELD_IS_SNAKE(game_getField(i, 0)) || PSG_FIELD_IS_SNAKE(game_getField(i, PSD_DISPLAY_HEIGHT - 1)))
 				if (check)
-					return 0;
-				else
-					goto skip4;
+					hit = 0;
 			game_setField(i, 0, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			game_setField(i, PSD_DISPLAY_HEIGHT - 1, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			display_put(i, 0, check);
@@ -281,15 +275,11 @@ int game_updateWalls(unsigned char id) {
 		for (i = PSD_DISPLAY_WIDTH / 3 + 1; i < PSD_DISPLAY_WIDTH / 3 * 2 + 1; i++) {
 			if (PSG_FIELD_IS_SNAKE(game_getField(i, 0)) || PSG_FIELD_IS_SNAKE(game_getField(i, PSD_DISPLAY_HEIGHT - 1)))
 				if (check)
-					return 0;
-				else
-					goto skip2;
+					hit = 0;
 			game_setField(i, 0, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			game_setField(i, PSD_DISPLAY_HEIGHT - 1, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			display_put(i, 0, check);
 			display_put(i, PSD_DISPLAY_HEIGHT - 1, check);
-			
-			skip2:;
 		}
 	}
 	
@@ -298,20 +288,16 @@ int game_updateWalls(unsigned char id) {
 		for (i = PSD_DISPLAY_WIDTH / 3 * 2 + 1; i < PSD_DISPLAY_WIDTH; i++) {
 			if (PSG_FIELD_IS_SNAKE(game_getField(i, 0)) || PSG_FIELD_IS_SNAKE(game_getField(i, PSD_DISPLAY_HEIGHT - 1)))
 				if (check)
-					return 0;
-				else
-					goto skip1;
+					hit = 0;
 			game_setField(i, 0, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			game_setField(i, PSD_DISPLAY_HEIGHT - 1, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
 			display_put(i, 0, check);
 			display_put(i, PSD_DISPLAY_HEIGHT - 1, check);
-			
-			skip1:;
 		}
 	}
 		
 	display_show();
 	lastWalls = id;
 	
-	return 1;
+	return hit;
 }

@@ -5,18 +5,21 @@
 #ifndef _PS_FONT
 #define _PS_FONT
 
-#define PSF_CHAR_COUNT 128
-#define PSF_CHAR_HEIGHT 8	// different size is not even planned to be supported
-#define PSF_CHAR_WIDTH 8
+#define PSF_CHAR_COUNT		128
+#define PSF_CHAR_HEIGHT 	8	// different size is not even planned to be supported
+#define PSF_CHAR_WIDTH		8
 
-#define PSF_CHECK_STRING 0
+#define PSF_CHECK_STRING	0
 
+
+#define PSF_CHAR_SELECTOR_LEFT	1
+#define PSF_CHAR_SELECTOR_RIGHT	2
 
 // Make this by hand or through some different tool
 // We used https://www.min.at/prinz/o/software/pixelfont/ to generate this
 static unsigned char font[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	// Char 000 (.)
-	0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,	// Char 001 (.)
+	0x00, 0x7E, 0x7E, 0x3C, 0x3C, 0x18, 0x18, 0x00,	// Char 001 (.)
 	0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,	// Char 002 (.)
 	0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,	// Char 003 (.)
 	0x00, 0x7E, 0x42, 0x42, 0x42, 0x42, 0x7E, 0x00,	// Char 004 (.)
