@@ -21,11 +21,9 @@
 // === INCLUDES ===
 // ================
 
-// Display includes all we need
+// Game includes all we need
 // But everything has define guards, so you can still include them here
-#include "display.h"
-
-
+#include "game.h"
 
 // ===================
 // === DEFINITIONS ===
@@ -36,9 +34,36 @@
 extern void loop();
 
 int bLooping = 1;
-int x, y, dirX = 1, dirY = 1;
-byte col = 0x00, colJmp = 0x20;
-unsigned int lastTime = 0;
+unsigned int speed = 0, lastTime = 0;
+
+unsigned char lastButtons, usedButtons;
+direction dir = PSG_DIR_UP;
+
+void gameover() {
+	game_start(8, input_getSwitches());
+}
+
+unsigned int speed_scales[] = {
+	40,
+	20,
+	10,
+	8,
+	5,
+	4,
+	2,
+	1
+};
+
+unsigned char speed_leds[] = {
+	0x80,
+	0xC0,
+	0xE0,
+	0xF0,
+	0xF8,
+	0xFC,
+	0xFE,
+	0xFF
+};
 
 // ===================
 // === Actual code ===
@@ -52,19 +77,17 @@ int main() {
 	enable_interrupts();
 	spi_initialize();
 	display_initialize();
+	input_initialize();
 	
 	display_clear();
 	display_show();
 	
-	// set up borders
-	display_invert();
-	display_clearRect(1, 1, 126, 30);
+	TRISECLR = 0xFF;		// preapare LEDS
+	PORTE = 0;
 	
-	display_setBrightness(col);
-	display_show();
+	display_setBrightness(0x7F);
 	
-	x = 1;
-	y = 1;
+	game_start(8, input_getSwitches());
 	
 	// MAIN LOOP
 	while (bLooping)
@@ -76,38 +99,48 @@ int main() {
 	return 0;
 }
 
+int x = 127;
+
 // Core loop of the program
-void loop() {
+void loop() {	
+	unsigned char buttons = input_getButtons();
+	
+	if (buttons)
+		usedButtons = buttons;
+	
+	// Quit early, because we don't want to update these parts too often
 	if (time_tick == lastTime)
 		return;
 	
-	// clear last position
-	display_clearRect(x, y, 31, 8);
+	speed = input_getDial() / 128;
+	PORTE = speed_leds[speed];
 	
-	x += dirX;
-	y += dirY;
-	// check horizontal movement
-	if (x == 96 || x == 1) {
-		dirX = -dirX;
-		col += colJmp;
-		if (col == 0xE0 || col == 0x0)
-			colJmp = -colJmp;
+	lastTime = time_tick;
+	
+	if (time_tick % 20 == 0)
+		game_blinkOneUp();
+	
+	// Update the game only once per speed_scalse
+	if (time_tick % speed_scales[speed] != 0)
+		return;
+	
+	if (!game_updateWalls(input_getSwitches()))
+			gameover();
+	
+	if (lastButtons != usedButtons) {
+		lastButtons = usedButtons;
+		if (usedButtons & 8)
+			dir = PSG_DIR_LEFT;
+		else if (usedButtons & 1)
+			dir = PSG_DIR_RIGHT;
+		else if (usedButtons & 2)
+			dir = PSG_DIR_DOWN;
+		else
+			dir = PSG_DIR_UP;
 	}
 	
-	// check vertical movement
-	if (y == 23 || y == 1) {
-		dirY = -dirY;
-		col += colJmp;
-		if (col == 0xE0 || col == 0x0)
-			colJmp = -colJmp;
-	}
-	
-	display_setBrightness(col);
-	
-	// set new position
-	display_putString(x, y, "Bump");
-	
-	display_showRect(x - 1, y - 1, 33, 10);
-	
+	game_score_multiplier = speed_scales[(sizeof(speed_scales) / sizeof(speed_scales[0])) - speed - 1];
+	if (!game_update(dir))
+		gameover();
 	lastTime = time_tick;
 }

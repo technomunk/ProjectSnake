@@ -1,5 +1,22 @@
 #include "utils.h"
 
+char intStr[] = "4294967295";	// intStr should be max possible size, so I set it to max value from intToStr();
+
+long holdrand;
+
+char * intToStr(unsigned int i, int * pSize) {
+	int size = 0;
+	do {
+		intStr[sizeof(intStr) - ++size] = '0' + (i % 10);
+		i /= 10;
+	} while (i);
+	
+	if (pSize)
+		*pSize = size;
+	
+	return &intStr[sizeof(intStr) - size];
+}
+
 /*
 	Initializes all required ports for SPI protocol
 	===============================================
@@ -48,4 +65,12 @@ byte spi_array(byte * pData, unsigned int dataSize) {
 		tmp = SPI2BUF;
 	}
 	return tmp;
+}
+
+void rand_seed(unsigned int seed) {
+	holdrand = (long)seed;
+}
+
+int rand_next() {
+	return (((holdrand = holdrand * 214013L + 2531011L) >> 16) & 0x7fff);
 }

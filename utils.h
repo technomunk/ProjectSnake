@@ -10,6 +10,11 @@
 
 typedef uint8_t byte;
 
+// For use with intToStr()
+extern char intStr[];
+
+char * intToStr(unsigned int translate, int * pSize);
+
 /*
 	Sets up the required ports and configures the connection
 */
@@ -38,5 +43,8 @@ byte spi_byte(byte data);
 		byte			- last recieved byte
 */
 byte spi_array(byte * pData, unsigned int dataSize);
+
+void rand_seed(unsigned int seed);
+int rand_next();
 
 #endif // !_PS_UTILITY
