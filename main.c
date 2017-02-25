@@ -30,20 +30,22 @@
 // ===================
 
 #define PS_SNAKE_SIZE	8
+#define PS_IDLE_TICK	800	// this is dependent on update interval
 
-#define PS_STATE_MENU	0
-#define PS_STATE_GAME	1
-#define PS_STATE_OVER	2
-#define PS_STATE_HIGH	3
-#define PS_STATE_SCORE	4
-#define PS_STATE_IDLE	5
+
+typedef enum {
+	STATE_MENU,
+	STATE_GAME,
+	STATE_OVER,
+	STATE_HIGH,
+	STATE_SCORE,
+	STATE_IDLE
+} STATE;
 
 #define PS_BLINK_PERIOD	20
 #define PS_INPUT_PAD	20
 
-typedef unsigned char state;
-
-void setState(state);
+void setState(STATE);
 
 unsigned int lastTime = 0, stateBeginTime = 0;
 unsigned char usedButtons;
@@ -51,7 +53,9 @@ unsigned char usedButtons;
 // Pointer to loop function
 void (*loop)() = 0;
 
-#define PS_SCORE_COUNT 9
+#define PS_SCORE_PER_PAGE	((PSD_DISPLAY_HEIGHT / PSF_CHAR_HEIGHT) - 1)
+#define PS_SCORE_PAGE_COUNT	3
+#define PS_SCORE_COUNT		(PS_SCORE_PAGE_COUNT * PS_SCORE_PAGE_COUNT)
 
 char score_names[PS_SCORE_COUNT][4] = {
 	"MAX",
@@ -78,7 +82,7 @@ unsigned int score_scores[PS_SCORE_COUNT] = {
 	
 	385,
 	124,
-	0
+	42
 };
 
 // State dependent variables live in this struct
@@ -110,10 +114,13 @@ union Variables {
 	} high;
 	
 	struct Score {
-		
+		unsigned char page;
+		unsigned int lastSelect;
 	} score;
 
 	struct Idle {
+		int x;
+		STATE lastState;
 	} idle;
 } vars;
 
@@ -150,7 +157,7 @@ int main() {
 	
 	display_setBrightness(0x7F);
 	
-	setState(PS_STATE_MENU);
+	setState(STATE_MENU);
 	
 	// MAIN LOOP
 	while (loop)
@@ -189,8 +196,13 @@ void loop_menu() {
 			vars.menu.selected = !vars.menu.selected;
 			vars.menu.lastSelect = time_tick;
 		} else {
-			setState((vars.menu.selected) ? PS_STATE_SCORE : PS_STATE_GAME);
+			setState((vars.menu.selected) ? STATE_SCORE : STATE_GAME);
 		}
+	}
+	
+	if ((time_tick - vars.menu.lastSelect) > PS_IDLE_TICK) {
+		vars.idle.lastState = STATE_MENU;
+		setState(STATE_IDLE);
 	}
 	
 	lastTime = time_tick;
@@ -218,7 +230,7 @@ void loop_game() {
 		return;
 	
 	if (!game_updateWalls(input_getSwitches()))
-		setState(PS_STATE_OVER);
+		setState(STATE_OVER);
 	
 	if (vars.game.lastButtons != usedButtons) {
 		vars.game.lastButtons = usedButtons;
@@ -234,7 +246,7 @@ void loop_game() {
 	
 	game_score_multiplier = speed_scales[(sizeof(speed_scales) / sizeof(speed_scales[0])) - vars.game.speed - 1];
 	if (!game_update(vars.game.dir))
-		setState(PS_STATE_OVER);
+		setState(STATE_OVER);
 	
 	lastTime = time_tick;
 }
@@ -264,7 +276,7 @@ void loop_over() {
 					// Cheat big time
 					vars.high.name = score_names[i];
 					vars.high.scorePos = i;
-					setState(PS_STATE_HIGH);
+					setState(STATE_HIGH);
 					return;
 				}
 			// Show the actual screen
@@ -295,10 +307,11 @@ void loop_over() {
 					display_showRect(PSD_DISPLAY_WIDTH / 2 - 24, 22, 8, 8);
 					display_showRect(PSD_DISPLAY_WIDTH / 2 - 28, 12, 8, 8);
 					
-					vars.over.lastSelect = time_tick;
 				} else {
-					setState((vars.over.selected) ? PS_STATE_MENU : PS_STATE_GAME);
+					setState((vars.over.selected) ? STATE_MENU : STATE_GAME);
 				}
+				
+				vars.over.lastSelect = time_tick;
 			}
 			
 		}
@@ -414,7 +427,7 @@ void loop_high() {
 				// Save high score
 				score_scores[vars.high.scorePos] = game_score;
 				// Name is taken care of because we dereference its position
-				setState(PS_STATE_MENU);
+				setState(STATE_MENU);
 				return;	// An important return
 			} else {
 				// Check which direction we're going
@@ -439,47 +452,115 @@ void loop_high() {
 			}
 		}
 		vars.high.lastSelect = time_tick;
-	}	
+	}
 };
 
+void showPage() {
+	display_clear();
+	
+	int size, i, offset;
+	char * str = intToStr(PS_SCORE_PAGE_COUNT, &size);
+	offset = size + 8;
+	str = intToStr(vars.score.page + 1, &size);
+	offset+= size;
+	
+	offset = (PSD_DISPLAY_WIDTH - (offset * PSF_CHAR_WIDTH)) / 2;
+	
+	display_putString(offset, 0, "Page (");
+	display_putString(offset + 6 * PSF_CHAR_WIDTH, 0, str);
+	
+	display_putChar(offset + PSF_CHAR_WIDTH * (size + 6), 0, '/');
+	str = intToStr(PS_SCORE_PAGE_COUNT, &i);
+	display_putString(offset + PSF_CHAR_WIDTH * (size + 7), 0, str);
+	display_putChar(offset + PSF_CHAR_WIDTH * (size + 7 + i), 0, ')');
+	
+	for (i = 0; i < PS_SCORE_PER_PAGE; i++) {
+		display_putString(0, PSF_CHAR_HEIGHT * (i + 1), score_names[(vars.score.page * PS_SCORE_PER_PAGE) + i]);
+		str = intToStr(score_scores[(vars.score.page * PS_SCORE_PER_PAGE) + i], &size);
+		display_putString(PSD_DISPLAY_WIDTH - 1 - (size * PSF_CHAR_WIDTH), PSF_CHAR_HEIGHT * (i + 1), str);
+	}
+	display_show();
+	return;
+}
+
 void loop_score() {
+	unsigned char buttons = input_getButtons();
+	
+	if (buttons)
+		usedButtons = buttons;
+	
 	if (lastTime == time_tick)
 		return;
 	
-	display_clear();
-	display_putString(0, 0, "Score");
-	display_show();
-	
 	lastTime = time_tick;
+	
+	if (buttons && ((time_tick - vars.score.lastSelect) >= PS_INPUT_PAD)) {
+		vars.score.lastSelect = time_tick;
+		if (usedButtons & 8) {
+			if (vars.score.page == 0)
+				vars.score.page = PS_SCORE_PAGE_COUNT - 1;
+			else
+				vars.score.page--;
+			
+			showPage();
+		} else if (usedButtons & 1) {
+			if (vars.score.page == PS_SCORE_PAGE_COUNT - 1)
+				vars.score.page = 0;
+			else
+				vars.score.page++;
+			
+			showPage();
+		} else {
+			// Return
+			setState(STATE_MENU);
+		}
+	}
+	
+	if ((time_tick - vars.score.lastSelect) > PS_IDLE_TICK) {
+		vars.idle.lastState = STATE_SCORE;
+		setState(STATE_IDLE);
+	}
 }
 
 void loop_idle() {
+	unsigned char buttons = input_getButtons();
+	
 	if (lastTime == time_tick)
 		return;
 	
-	display_clear();
-	display_putString(0, 0, "Idle");
-	display_show();
+	if (buttons) {
+		display_setBrightness(0x7F);
+		setState(vars.idle.lastState);
+		return;
+	}
+	
+	if (++vars.idle.x == PSD_DISPLAY_WIDTH) {
+		vars.idle.x = 0;
+		display_invert();
+		PORTE = rand_next() % 256;
+	}
+	
+	display_showRect(vars.idle.x, 0, 1, PSD_DISPLAY_HEIGHT);
 	
 	lastTime = time_tick;
 }
 
-void setState(state s) {
+void setState(STATE s) {
 	PORTE = 0;
 	switch (s) {
-	case PS_STATE_GAME:
+	case STATE_GAME:
 		game_start(PS_SNAKE_SIZE, input_getSwitches());
 		loop = &loop_game;
 	break;
 	
-	case PS_STATE_OVER:
+	case STATE_OVER:
 		vars.over.lastSelect = time_tick;
 		vars.over.substate = 0;
 		int i;
 		loop = &loop_over;
 	break;
 	
-	case PS_STATE_HIGH:
+	case STATE_HIGH:
 		// Show the new highscore!
 		display_clear();
 		display_putString(8, 0, "New Highscore!");
@@ -496,17 +577,20 @@ void setState(state s) {
 		loop = &loop_high;
 	break;
 	
-	case PS_STATE_SCORE:
-		display_clear();
+	case STATE_SCORE:
+		vars.score.page = 0;
+		showPage();
+		vars.score.lastSelect = time_tick;
 		loop = &loop_score;
 	break;
 	
-	case PS_STATE_IDLE:
-		display_clear();
+	case STATE_IDLE:
+		vars.idle.x = PSD_DISPLAY_WIDTH - 1;
+		display_setBrightness(0);
 		loop = &loop_idle;
 	break;
 	
-	default:
+	default:	// STATE_MENU
 		display_clear();
 		display_putString(PSD_DISPLAY_WIDTH / 2 - 16, 4, "PLAY");
 		display_putString(PSD_DISPLAY_WIDTH / 2 - 24, 20, "SCORES");
