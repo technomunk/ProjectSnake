@@ -245,7 +245,7 @@ int game_updateWalls(unsigned char id) {
 	if ((lastWalls & 8) != (id & 8)) {
 		check = id & 8;
 		for (i = 0; i < PSD_DISPLAY_HEIGHT; i++) {
-			if (PSG_FIELD_IS_SNAKE(game_getField(i, 0)) || PSG_FIELD_IS_SNAKE(game_getField(i, PSD_DISPLAY_HEIGHT - 1)))
+			if (PSG_FIELD_IS_SNAKE(game_getField(0, i)) || PSG_FIELD_IS_SNAKE(game_getField(PSD_DISPLAY_WIDTH - 1, i)))
 				if (check)
 					hit = 0;
 			game_setField(0, i, (check) ? PSG_FIELD_WALL : PSG_FIELD_EMPTY);
