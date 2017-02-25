@@ -323,16 +323,19 @@ void loop_over() {
 void showSelection() {
 	switch (vars.high.selected) {
 	case 0:
+		display_clearRect((PSD_DISPLAY_WIDTH - (3 * PSF_CHAR_WIDTH)) / 2, 16, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 		display_putChar((PSD_DISPLAY_WIDTH - (3 * PSF_CHAR_WIDTH)) / 2, 16, vars.high.name[vars.high.selected]);
 		display_showRect((PSD_DISPLAY_WIDTH - (3 * PSF_CHAR_WIDTH)) / 2, 16, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 	break;
 	
 	case 1:
+		display_clearRect((PSD_DISPLAY_WIDTH - PSF_CHAR_WIDTH) / 2, 16, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 		display_putChar((PSD_DISPLAY_WIDTH - PSF_CHAR_WIDTH) / 2, 16, vars.high.name[vars.high.selected]);
 		display_showRect((PSD_DISPLAY_WIDTH - PSF_CHAR_WIDTH) / 2, 16, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 	break;
 	
 	case 2:
+		display_clearRect((PSD_DISPLAY_WIDTH + PSF_CHAR_WIDTH) / 2, 16, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 		display_putChar((PSD_DISPLAY_WIDTH + PSF_CHAR_WIDTH) / 2, 16, vars.high.name[vars.high.selected]);
 		display_showRect((PSD_DISPLAY_WIDTH + PSF_CHAR_WIDTH) / 2, 16, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 	break;
