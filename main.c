@@ -32,6 +32,12 @@
 #define PS_SNAKE_SIZE	8
 #define PS_IDLE_TICK	800	// this is dependent on update interval
 
+#define PS_BLINK_PERIOD	20
+#define PS_INPUT_PAD	20
+
+#define PS_SCORE_PER_PAGE	((PSD_DISPLAY_HEIGHT / PSF_CHAR_HEIGHT) - 1)
+#define PS_SCORE_PAGE_COUNT	3
+#define PS_SCORE_COUNT		(PS_SCORE_PAGE_COUNT * PS_SCORE_PAGE_COUNT)
 
 typedef enum {
 	STATE_MENU,
@@ -42,20 +48,14 @@ typedef enum {
 	STATE_IDLE
 } STATE;
 
-#define PS_BLINK_PERIOD	20
-#define PS_INPUT_PAD	20
 
 void setState(STATE);
 
 unsigned int lastTime = 0, stateBeginTime = 0;
 unsigned char usedButtons;
 
-// Pointer to loop function
+// Pointer to used loop function
 void (*loop)() = 0;
-
-#define PS_SCORE_PER_PAGE	((PSD_DISPLAY_HEIGHT / PSF_CHAR_HEIGHT) - 1)
-#define PS_SCORE_PAGE_COUNT	3
-#define PS_SCORE_COUNT		(PS_SCORE_PAGE_COUNT * PS_SCORE_PAGE_COUNT)
 
 char score_names[PS_SCORE_COUNT][4] = {
 	"MAX",
@@ -85,7 +85,7 @@ unsigned int score_scores[PS_SCORE_COUNT] = {
 	42
 };
 
-// State dependent variables live in this struct
+// State dependent variables live in the same chunk of memory, which makes the program require less memory overall, but also makes some transitions volotile
 union Variables {
 	struct Menu {
 		unsigned char selected;
@@ -173,6 +173,12 @@ int main() {
 // === Different loops ===
 // =======================
 
+/*
+	By Grigory Glukhov:
+	
+	The state-dependent is rarely clean especially when user-input is concerned, so thats my excuse for this difficult-to-read (but working!) mess
+*/
+
 void loop_menu() {
 	unsigned char buttons = input_getButtons();
 	
@@ -182,15 +188,27 @@ void loop_menu() {
 	if (buttons && ((time_tick - vars.menu.lastSelect) >= PS_INPUT_PAD)) {
 		if ((usedButtons & 1) || (usedButtons & 8)) {
 			if (vars.menu.selected) {
-				display_clearRect(PSD_DISPLAY_WIDTH / 2 - 32, 20, 8, 8);
-				display_putChar(PSD_DISPLAY_WIDTH / 2 - 24, 4, PSF_CHAR_SELECTOR_LEFT);
+				// Clear selectors around "SCORES"
+				display_clearRect((PSD_DISPLAY_WIDTH - (8 * PSF_CHAR_WIDTH)) / 2, 20, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+				display_clearRect((PSD_DISPLAY_WIDTH + (6 * PSF_CHAR_WIDTH)) / 2, 20, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+				
+				// Put selectors around "PLAY"
+				display_putChar((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_SELECTOR_LEFT);
+				display_putChar((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_SELECTOR_RIGHT);
 			} else {
-				display_clearRect(PSD_DISPLAY_WIDTH / 2 - 24, 4, 8, 8);
-				display_putChar(PSD_DISPLAY_WIDTH / 2 - 32, 20, PSF_CHAR_SELECTOR_LEFT);
+				// Clear selectors around "PLAY"
+				display_clearRect((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+				display_clearRect((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+				// Put selectors around "SCORES"
+				display_putChar((PSD_DISPLAY_WIDTH - (8 * PSF_CHAR_WIDTH)) / 2, 20, PSF_CHAR_SELECTOR_LEFT);
+				display_putChar((PSD_DISPLAY_WIDTH + (6 * PSF_CHAR_WIDTH)) / 2, 20, PSF_CHAR_SELECTOR_RIGHT);
 			}
 			
-			display_showRect(PSD_DISPLAY_WIDTH / 2 - 32, 20, 8, 8);
-			display_showRect(PSD_DISPLAY_WIDTH / 2 - 24, 4, 8, 8);
+			// No need to update the whole screen, so only update changed areas
+			display_showRect((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+			display_showRect((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+			display_showRect((PSD_DISPLAY_WIDTH - (8 * PSF_CHAR_WIDTH)) / 2, 20, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+			display_showRect((PSD_DISPLAY_WIDTH + (6 * PSF_CHAR_WIDTH)) / 2, 20, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 			
 			
 			vars.menu.selected = !vars.menu.selected;
@@ -283,10 +301,13 @@ void loop_over() {
 			display_clear();
 			int size;
 			char * str = intToStr(game_score, &size);
+			// Show score
 			display_putString((PSD_DISPLAY_WIDTH - (size * PSF_CHAR_WIDTH)) / 2, 2, str);
-			display_putChar(PSD_DISPLAY_WIDTH / 2 - 28, 12, PSF_CHAR_SELECTOR_LEFT);
-			display_putString(PSD_DISPLAY_WIDTH / 2 - 20, 12, "AGAIN");
-			display_putString(PSD_DISPLAY_WIDTH / 2 - 16, 22, "STOP");
+			display_putString((PSD_DISPLAY_WIDTH - (5 * PSF_CHAR_WIDTH)) / 2, 12, "AGAIN");
+			display_putString((PSD_DISPLAY_WIDTH - (4 * PSF_CHAR_WIDTH)) / 2, 22, "STOP");
+			// Put selectors around "AGAIN"
+			display_putChar((PSD_DISPLAY_WIDTH - (7 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_SELECTOR_LEFT);
+			display_putChar((PSD_DISPLAY_WIDTH + (5 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_SELECTOR_RIGHT);
 			vars.over.selected = 0;
 			display_show();
 			vars.over.substate = 1;
@@ -297,15 +318,23 @@ void loop_over() {
 					vars.over.selected = !(vars.over.selected);
 					
 					if (vars.over.selected) {
-						display_clearRect(PSD_DISPLAY_WIDTH / 2 - 28, 12, 8, 8);
-						display_putChar(PSD_DISPLAY_WIDTH / 2 - 24, 22, PSF_CHAR_SELECTOR_LEFT);
+						display_clearRect((PSD_DISPLAY_WIDTH - (7 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+						display_clearRect((PSD_DISPLAY_WIDTH + (5 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+						
+						display_putChar((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 22, PSF_CHAR_SELECTOR_LEFT);
+						display_putChar((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 22, PSF_CHAR_SELECTOR_RIGHT);
 					} else {
-						display_clearRect(PSD_DISPLAY_WIDTH / 2 - 24, 22, 8, 8);
-						display_putChar(PSD_DISPLAY_WIDTH / 2 - 28, 12, PSF_CHAR_SELECTOR_LEFT);
+						display_clearRect((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 22, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+						display_clearRect((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 22, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+						
+						display_putChar((PSD_DISPLAY_WIDTH - (7 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_SELECTOR_LEFT);
+						display_putChar((PSD_DISPLAY_WIDTH + (5 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_SELECTOR_RIGHT);
 					}
 					
-					display_showRect(PSD_DISPLAY_WIDTH / 2 - 24, 22, 8, 8);
-					display_showRect(PSD_DISPLAY_WIDTH / 2 - 28, 12, 8, 8);
+					display_showRect((PSD_DISPLAY_WIDTH - (7 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+					display_showRect((PSD_DISPLAY_WIDTH + (5 * PSF_CHAR_WIDTH)) / 2, 12, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+					display_showRect((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 22, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
+					display_showRect((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 22, PSF_CHAR_WIDTH, PSF_CHAR_HEIGHT);
 					
 				} else {
 					setState((vars.over.selected) ? STATE_MENU : STATE_GAME);
@@ -543,6 +572,7 @@ void loop_idle() {
 		PORTE = rand_next() % 256;
 	}
 	
+	// This is the whole trick of the idle animation, as we invert the whole display at once, but only send screen updates in a line
 	display_showRect(vars.idle.x, 0, 1, PSD_DISPLAY_HEIGHT);
 	
 	lastTime = time_tick;
@@ -557,6 +587,8 @@ void setState(STATE s) {
 	break;
 	
 	case STATE_OVER:
+		// Deceptively simple here, but it's because of more complex behavior of the loop
+		// To tell you a secret that complex behavior is the sole reason of lack of idle animation in over as it shows too many seems
 		vars.over.lastSelect = time_tick;
 		vars.over.substate = 0;
 		int i;
@@ -597,7 +629,9 @@ void setState(STATE s) {
 		display_clear();
 		display_putString(PSD_DISPLAY_WIDTH / 2 - 16, 4, "PLAY");
 		display_putString(PSD_DISPLAY_WIDTH / 2 - 24, 20, "SCORES");
-		display_putChar(PSD_DISPLAY_WIDTH / 2 - 24, 4, PSF_CHAR_SELECTOR_LEFT);
+		// Put selectors around "PLAY"
+		display_putChar((PSD_DISPLAY_WIDTH - (6 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_SELECTOR_LEFT);
+		display_putChar((PSD_DISPLAY_WIDTH + (4 * PSF_CHAR_WIDTH)) / 2, 4, PSF_CHAR_SELECTOR_RIGHT);
 		display_show();
 		
 		vars.menu.lastSelect = time_tick;
