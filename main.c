@@ -57,32 +57,24 @@ unsigned char usedButtons;
 // Pointer to used loop function
 void (*loop)() = 0;
 
-char score_names[PS_SCORE_COUNT][4] = {
-	"MAX",
-	"Liz",
-	"Ela",
-	
-	"Jak",
-	"Dan",
-	"Oly",
-	
-	"Fox",
-	"Bob",
-	"Fun"
-};
+// Name lengths could be bigger, but 3 characters has old school arcade vibe
+typedef struct {
+	char name[4];
+	unsigned int score;
+} SCORE;
 
-unsigned int score_scores[PS_SCORE_COUNT] = {
-	15000,
-	8654,
-	5751,
+SCORE scores[PS_SCORE_COUNT] = {
+	{"MAX", 4096},
+	{"TUS", 1024},
+	{"PRG", 512},
 	
-	2642,
-	1242,
-	845,
+	{"FUN", 69},
+	{"MLC", 54},
+	{"ANS", 42},
 	
-	385,
-	124,
-	42
+	{"Ana", 30},
+	{"Alx", 20},
+	{"HRD", 1}
 };
 
 // State dependent variables live in the same chunk of memory, which makes the program require less memory overall, but also makes some transitions volotile
@@ -106,7 +98,7 @@ union Variables {
 	} over;
 	
 	struct High {
-		char * name;
+		char name[4];
 		unsigned char selected;
 		unsigned char blink;
 		unsigned int scorePos;
@@ -287,16 +279,23 @@ void loop_over() {
 	} else {
 		// This will make sure we only update the screen once
 		if (!vars.over.substate) {
-			int i;
+			int i, found = 0;
 			// Check if the new score is a highscore
-			for (i = 0; i < PS_SCORE_COUNT; i++)
-				if (score_scores[i] < game_score) {
-					// Cheat big time
-					vars.high.name = score_names[i];
+			for (i = PS_SCORE_COUNT; i >= 0; --i)
+				if (scores[i].score < game_score) {
+					// Basic default name
+					strcpy(vars.high.name, "AAA");
 					vars.high.scorePos = i;
-					setState(STATE_HIGH);
-					return;
+					found = 1;
+					
+					// Because score is a sorted list (well, hopefully), sort everything down:
+					if (i != 0)
+						scores[i] = scores[i - 1];
 				}
+			if (found) {
+				setState(STATE_HIGH);
+				return;
+			}
 			// Show the actual screen
 			display_clear();
 			int size;
@@ -457,8 +456,8 @@ void loop_high() {
 		} else {
 			if (vars.high.selected == 3) {
 				// Save high score
-				score_scores[vars.high.scorePos] = game_score;
-				// Name is taken care of because we dereference its position
+				scores[vars.high.scorePos].score = game_score;
+				strcpy(scores[vars.high.scorePos].name, vars.high.name);
 				setState(STATE_MENU);
 				return;	// An important return
 			} else {
@@ -507,8 +506,8 @@ void showPage() {
 	display_putChar(offset + PSF_CHAR_WIDTH * (size + 7 + i), 0, ')');
 	
 	for (i = 0; i < PS_SCORE_PER_PAGE; i++) {
-		display_putString(0, PSF_CHAR_HEIGHT * (i + 1), score_names[(vars.score.page * PS_SCORE_PER_PAGE) + i]);
-		str = intToStr(score_scores[(vars.score.page * PS_SCORE_PER_PAGE) + i], &size);
+		display_putString(0, PSF_CHAR_HEIGHT * (i + 1), scores[(vars.score.page * PS_SCORE_PER_PAGE) + i].name);
+		str = intToStr(scores[(vars.score.page * PS_SCORE_PER_PAGE) + i].score, &size);
 		display_putString(PSD_DISPLAY_WIDTH - 1 - (size * PSF_CHAR_WIDTH), PSF_CHAR_HEIGHT * (i + 1), str);
 	}
 	display_show();

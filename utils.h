@@ -47,4 +47,6 @@ byte spi_array(byte * pData, unsigned int dataSize);
 void rand_seed(unsigned int seed);
 int rand_next();
 
+void strcpy(char * destination, char * source);
+
 #endif // !_PS_UTILITY
