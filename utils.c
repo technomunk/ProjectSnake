@@ -4,6 +4,12 @@ char intStr[] = "4294967295";	// intStr should be max possible size, so I set it
 
 long holdrand;
 
+/*
+	Fairly simple translation
+	=========================
+	by
+		Grigory Glukhov
+*/
 char * intToStr(unsigned int i, int * pSize) {
 	int size = 0;
 	do {
@@ -17,6 +23,12 @@ char * intToStr(unsigned int i, int * pSize) {
 	return &intStr[sizeof(intStr) - size];
 }
 
+/*
+	Most basic copy utility
+	=======================
+	by
+		Grigory Glukhov
+*/
 void strcpy(char * dest, char * src) {
 	do {
 		*dest = *src;
@@ -75,10 +87,22 @@ byte spi_array(byte * pData, unsigned int dataSize) {
 	return tmp;
 }
 
+/*
+	Initializes the RNG
+	===================
+	copied from
+		standard c library
+*/
 void rand_seed(unsigned int seed) {
 	holdrand = (long)seed;
 }
 
+/*
+	Retreives a random number from RNG
+	==================================
+	copied from
+		standard c library
+*/
 int rand_next() {
 	return (((holdrand = holdrand * 214013L + 2531011L) >> 16) & 0x7fff);
 }
