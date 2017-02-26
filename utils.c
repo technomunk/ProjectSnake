@@ -17,6 +17,14 @@ char * intToStr(unsigned int i, int * pSize) {
 	return &intStr[sizeof(intStr) - size];
 }
 
+void strcpy(char * dest, char * src) {
+	do {
+		*dest = *src;
+		src++;
+		dest++;
+	} while (*src);
+}
+
 /*
 	Initializes all required ports for SPI protocol
 	===============================================
