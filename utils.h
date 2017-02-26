@@ -13,6 +13,16 @@ typedef uint8_t byte;
 // For use with intToStr()
 extern char intStr[];
 
+/*
+	Translates an integer to null-terminated string (radix 10)
+	
+	Arguments:
+		unsigned int	- the integer value to translate (unsigned)
+		int	*			- pointer to an integer to store the size of the string (or 0 to ignore)
+		
+	Returns:
+		char *			- pointer to the first char of the string
+*/
 char * intToStr(unsigned int translate, int * pSize);
 
 /*
@@ -44,9 +54,29 @@ byte spi_byte(byte data);
 */
 byte spi_array(byte * pData, unsigned int dataSize);
 
+/*
+	Seed the RNG
+	
+	Arguments:
+		unsigned int	- seed
+*/
 void rand_seed(unsigned int seed);
+
+/*
+	Retreive the next pseudo-random value of the RNG
+	
+	Returns:
+		int		- pseudo-random integer
+*/
 int rand_next();
 
+/*
+	Copies the source string to destination
+	
+	Arguments:
+		char *		- pointer to the destination string
+		char *		- pointer to the source null-terminated string
+*/
 void strcpy(char * destination, char * source);
 
 #endif // !_PS_UTILITY
