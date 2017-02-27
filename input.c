@@ -9,14 +9,14 @@ void input_initialize() {
 	AD1PCFG = ~0x4;
 	TRISBSET = 0x4;
 	
-	AD1CHS |= (2 << 16);
+	AD1CHS |= 0x20000;
 	
-	AD1CON1 |= (4 << 8) | (7 << 5);
+	AD1CON1 |= 0x4E0;
 	AD1CON2 &= 0;
-	AD1CON3	|= (1 << 15);
+	AD1CON3	|= 0x8000;
 	
 	// Turn on ADC
-	AD1CON1 |= (1 << 15);
+	AD1CON1 |= 0x8000;
 	
 	// =======================================
 	// === Initialize Buttons and Switches ===
@@ -26,7 +26,7 @@ void input_initialize() {
 	TRISFSET = 0x2;		// Button 1
 }
 
-unsigned int input_getDial() {
+unsigned int input_readDial() {
 	AD1CON1 |= 2;
 	while (!(AD1CON1 & 2));
 	while (!(AD1CON1 & 1));

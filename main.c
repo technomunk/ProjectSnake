@@ -24,6 +24,7 @@
 // Game includes all we need
 // But everything has define guards, so you can still include them here
 #include "game.h"
+#include "input.h"
 
 // ===================
 // === DEFINITIONS ===
@@ -227,7 +228,7 @@ void loop_game() {
 	if (time_tick == lastTime)
 		return;
 	
-	vars.game.speed = input_getDial() / 128;
+	vars.game.speed = input_readDial() / 128;
 	PORTE = 255 - (127 >> vars.game.speed);
 	
 	lastTime = time_tick;
@@ -239,8 +240,10 @@ void loop_game() {
 	if ((time_tick % speed_scales[vars.game.speed]) != 0)
 		return;
 	
-	if (!game_updateWalls(input_getSwitches()))
+	if (!game_updateWalls(input_getSwitches())) {
 		setState(STATE_OVER);
+		return;
+	}
 	
 	if (vars.game.lastButtons != usedButtons) {
 		vars.game.lastButtons = usedButtons;
@@ -257,8 +260,6 @@ void loop_game() {
 	game_score_multiplier = speed_scales[(sizeof(speed_scales) / sizeof(speed_scales[0])) - vars.game.speed - 1];
 	if (!game_update(vars.game.dir))
 		setState(STATE_OVER);
-	
-	lastTime = time_tick;
 }
 
 void loop_over() {
