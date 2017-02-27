@@ -1,5 +1,8 @@
+#include <pic32mx.h>
+
 /* Non-Maskable Interrupt; something bad likely happened, so hang */
 void _nmi_handler() {
+	PORTE = 5;
 	for(;;);
 }
 

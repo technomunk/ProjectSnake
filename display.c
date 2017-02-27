@@ -155,7 +155,7 @@ void display_update(int x, int y, int flag) {
 	spi_byte(PSD_CMD_SET_PAGE_UNSAFE(page));	// use unsafe, if VALIDATE_ARGS it is safe, if not - not supposed to be
 	
 	// Send row number
-	spi_byte(PSD_CMD_SET_COL_LOW(x));	// low nibble
+	spi_byte(PSD_CMD_SET_COL_LOW(x));			// low nibble
 	spi_byte(PSD_CMD_SET_COL_HIGH_UNSAFE(x));	// high nibble	// use unsafe, if VALIDATE_ARGS it is safe, if not - not supposed to be
 	
 	
@@ -286,14 +286,14 @@ void display_showRect(int x, int y, int w, int h) {
 	PSD_PORT_DATA_COMMAND &= ~PSD_MASK_DATA;
 	
 	// Reset column
-	spi_byte(PSD_CMD_SET_COLUMN);		// send set column command
-	spi_byte(x);		// starting column
-	spi_byte(x + w - 1);	// ending column
+	spi_byte(PSD_CMD_SET_COLUMN);	// send set column command
+	spi_byte(x);					// starting column
+	spi_byte(x + w - 1);			// ending column
 	
 	// Reset page
 	spi_byte(PSD_CMD_SET_PAGE);		// send set row command
-	spi_byte(y);		// starting page
-	spi_byte(h - 1);		// ending page
+	spi_byte(y);					// starting page
+	spi_byte(h - 1);				// ending page
 
 	PSD_PORT_DATA_COMMAND |= PSD_MASK_DATA;
 	
@@ -302,10 +302,65 @@ void display_showRect(int x, int y, int w, int h) {
 		spi_array(display_buffer + (i * PSD_COLUMN_COUNT) + x, w);
 }
 
+void display_putChar(int x, int y, char c) {
+
+#if PSD_VALIDATE_ARGS
+	x %= PSD_DISPLAY_WIDTH;
+	y %= PSD_DISPLAY_HEIGHT;
+#endif	// PSD_VALIDATE_ARGS
+
+	if (y % 8) {
+		
+		// do magic
+		int rt = y % 8;
+		int rb = 8 - rt;
+		y = (y / 8) * PSD_COLUMN_COUNT;
+		int yb = y + PSD_COLUMN_COUNT;
+		
+		int i;
+		
+		for (i = 0; i < PSF_CHAR_WIDTH; i++) {
+#if PSD_VALIDATE_ARGS
+			if (x + i >= PSD_DISPLAY_WIDTH)
+				break;
+#endif	// PSD_VALIDATE_ARGS
+			
+#if PSF_CHECK_STRING
+			display_buffer[y + x] |= font[(c % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i] << rt;
+			display_buffer[yb + x] |= font[(c % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i] >> rb;
+#else
+			display_buffer[y + x] |= font[c * PSF_CHAR_WIDTH + i] << rt;
+			display_buffer[yb + x] |= font[c * PSF_CHAR_WIDTH + i] >> rb;
+#endif	// PSF_CHECK_STRING
+			x++;
+		}
+		
+	} else {
+		
+		// simple case
+		y = (y / 8) * PSD_COLUMN_COUNT;
+		int i;
+		for (i = 0; i < PSF_CHAR_WIDTH; i++) {
+#if PSD_VALIDATE_ARGS
+			if (x + i >= PSD_DISPLAY_WIDTH)
+				break;
+#endif	// PSD_VALIDATE_ARGS
+#if PSF_CHECK_STRING
+			display_buffer[y + x] |= font[(c % PSF_CHAR_COUNT) * PSF_CHAR_WIDTH + i];
+#else
+			display_buffer[y + x] |= font[c * PSF_CHAR_WIDTH + i];
+#endif	// PSF_CHECK_STRING
+			x++;
+		}
+	}
+}
+
 void display_putString(int x, int y, char * pString) {
 	
 #if PSD_VALIDATE_ARGS
 	x %= PSD_DISPLAY_WIDTH;
+	if (y + PSF_CHAR_HEIGHT >= PSD_DISPLAY_HEIGHT)
+		y = PSD_DISPLAY_HEIGHT - PSF_CHAR_HEIGHT - 1;
 	y %= PSD_DISPLAY_HEIGHT;
 #endif	// PSD_VALIDATE_ARGS
 	
@@ -323,8 +378,6 @@ void display_putString(int x, int y, char * pString) {
 			for (i = 0; i < PSF_CHAR_WIDTH; i++) {
 #if PSD_VALIDATE_ARGS
 				if (x + i >= PSD_DISPLAY_WIDTH)
-					break;
-				else if (y + PSF_CHAR_HEIGHT)
 					break;
 #endif	// PSD_VALIDATE_ARGS
 				
@@ -350,8 +403,6 @@ void display_putString(int x, int y, char * pString) {
 			for (i = 0; i < PSF_CHAR_WIDTH; i++) {
 #if PSD_VALIDATE_ARGS
 				if (x + i >= PSD_DISPLAY_WIDTH)
-					break;
-				else if (y + PSF_CHAR_HEIGHT)
 					break;
 #endif	// PSD_VALIDATE_ARGS
 #if PSF_CHECK_STRING
