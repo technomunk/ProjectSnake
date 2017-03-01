@@ -1,5 +1,5 @@
 /*
-	
+	A library for reading inputs from the IO Shield
 */
 
 #ifndef _PS_INPUT

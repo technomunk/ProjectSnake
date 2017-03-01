@@ -7,6 +7,8 @@
 
 #include "display.h"
 
+// If set to anything other than 0 will flag to compile code, that will make sure all the arguments are within limits
+// We set it to 0 to reduce amount of compiled code and make it slightly faster
 #define PSG_VALIDATE_ARGS		0
 
 #define PSG_DIR_UP				0

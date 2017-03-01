@@ -30,15 +30,17 @@
 // === DEFINITIONS ===
 // ===================
 
-#define PS_SNAKE_SIZE	8
-#define PS_IDLE_TICK	800	// this is dependent on update interval
+#define PS_SNAKE_SIZE		8
+#define PS_IDLE_TICK		800	// this is dependent on update interval
 
-#define PS_BLINK_PERIOD	20
-#define PS_INPUT_PAD	20
+#define PS_BLINK_PERIOD		30
+#define PS_INPUT_PAD		20
 
 #define PS_SCORE_PER_PAGE	((PSD_DISPLAY_HEIGHT / PSF_CHAR_HEIGHT) - 1)
 #define PS_SCORE_PAGE_COUNT	3
 #define PS_SCORE_COUNT		(PS_SCORE_PAGE_COUNT * PS_SCORE_PAGE_COUNT)
+
+#define PS_SCORE_NAME		"AAA"
 
 typedef enum {
 	STATE_MENU,
@@ -55,10 +57,14 @@ void setState(STATE);
 unsigned int lastTime = 0, stateBeginTime = 0;
 unsigned char usedButtons;
 
-// Pointer to used loop function
+/*
+	Pointer to used loop function
+	We change this to point to different loop functions on state change
+	This is one of the cleanest ways of making a state-machiene
+*/
 void (*loop)() = 0;
 
-// Name lengths could be bigger, but 3 characters has old school arcade vibe
+// Name length could be bigger (because the screen fits 16 characters and max possible score only takes 6 characters in decimal), but triple-letter ones have old-school arcade vibe to it.
 typedef struct {
 	char name[4];
 	unsigned int score;
@@ -78,7 +84,7 @@ SCORE scores[PS_SCORE_COUNT] = {
 	{"HRD", 1}
 };
 
-// State dependent variables live in the same chunk of memory, which makes the program require less memory overall, but also makes some transitions volotile
+// State dependent variables live in the same chunk of memory, which makes the program require less memory overall, but also makes some transitions volatile
 union Variables {
 	struct Menu {
 		unsigned char selected;
@@ -139,7 +145,7 @@ int main() {
 	time_initialize();
 	enable_interrupts();
 	spi_initialize();
-	display_initialize();
+	display_initialize();	// This function has to be called after time, interrupts and spi have been initialized
 	input_initialize();
 	
 	display_clear();
@@ -148,7 +154,7 @@ int main() {
 	TRISECLR = 0xFF;		// preapare LEDS
 	PORTE = 0;				// clear LEDS
 	
-	display_setBrightness(0x7F);
+	display_setBrightness(0x7F);	// Reset brightness to default
 	
 	setState(STATE_MENU);
 	
@@ -169,7 +175,7 @@ int main() {
 /*
 	By Grigory Glukhov:
 	
-	The state-dependent is rarely clean especially when user-input is concerned, so thats my excuse for this difficult-to-read (but working!) mess
+	State-dependent code is rarely clean and especially when user input is involved, so that was my excuse for this mess...
 */
 
 void loop_menu() {
@@ -282,10 +288,11 @@ void loop_over() {
 		if (!vars.over.substate) {
 			int i, found = 0;
 			// Check if the new score is a highscore
+			// This loop might be a bit of a headache, but its quite simple really
 			for (i = PS_SCORE_COUNT; i >= 0; --i)
 				if (scores[i].score < game_score) {
 					// Basic default name
-					strcpy(vars.high.name, "AAA");
+					strcpy(vars.high.name, PS_SCORE_NAME);
 					vars.high.scorePos = i;
 					found = 1;
 					
@@ -293,11 +300,13 @@ void loop_over() {
 					if (i != 0)
 						scores[i] = scores[i - 1];
 				}
+				
 			if (found) {
 				setState(STATE_HIGH);
 				return;
 			}
-			// Show the actual screen
+			
+			// At this point we know we're not a new highscore, thus update the screen
 			display_clear();
 			int size;
 			char * str = intToStr(game_score, &size);
@@ -387,7 +396,7 @@ void loop_high() {
 	
 	lastTime = time_tick;
 	
-	// Make sure the player has time no notice change before reading inputs
+	// Make sure the player has time to notice change before reading inputs
 	if (time_tick - stateBeginTime < PS_INPUT_PAD)
 		return;
 	
@@ -498,6 +507,8 @@ void showPage() {
 	
 	offset = (PSD_DISPLAY_WIDTH - (offset * PSF_CHAR_WIDTH)) / 2;
 	
+	// A hard-coded string works fine in this case, but generally even this should be defined at the beginning of the file
+	
 	display_putString(offset, 0, "Page (");
 	display_putString(offset + 6 * PSF_CHAR_WIDTH, 0, str);
 	
@@ -572,7 +583,7 @@ void loop_idle() {
 		PORTE = rand_next() % 256;
 	}
 	
-	// This is the whole trick of the idle animation, as we invert the whole display at once, but only send screen updates in a line
+	// This is the whole trick of the idle animation, as we invert the whole display at once, but only send screen updates column at a time
 	display_showRect(vars.idle.x, 0, 1, PSD_DISPLAY_HEIGHT);
 	
 	lastTime = time_tick;
@@ -604,7 +615,7 @@ void setState(STATE s) {
 		display_putString((PSD_DISPLAY_WIDTH - (size * PSF_CHAR_WIDTH)) / 2, 8, str);
 		vars.high.selected = 0;
 		vars.high.blink = 0;
-		// The name has been taken care of in over
+		// The name has been taken care of in STATE_OVER
 		display_putString((PSD_DISPLAY_WIDTH - (3 * PSF_CHAR_WIDTH)) / 2, 16, vars.high.name);
 		display_putString((PSD_DISPLAY_WIDTH - (4 * PSF_CHAR_WIDTH)) / 2, 24, "Save");
 		display_show();

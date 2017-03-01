@@ -15,7 +15,7 @@
 
 
 // false	- maximize performance, but functions become unsafe (access violations may occur on illegal arguments and so on)
-// true 	- sacrifice some performance, but make functions safe (cast illegal args into legal onces, bail early on illegal cases)
+// true 	- sacrifice some performance, but make functions safe (cast illegal args into legal onces, bail early in illegal cases)
 #define PSD_VALIDATE_ARGS 0
 
 

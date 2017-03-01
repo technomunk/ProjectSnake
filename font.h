@@ -5,12 +5,13 @@
 #ifndef _PS_FONT
 #define _PS_FONT
 
-#define PSF_CHAR_COUNT		128
-#define PSF_CHAR_HEIGHT 	8	// different height is not even planned to be supported
-#define PSF_CHAR_WIDTH		8	// most of the code should be able to handle different width, although if you use any larger than 8 I advise setting PSD_VALIDATE_ARGS to true
+#define PSF_CHAR_COUNT				128
+#define PSF_CHAR_HEIGHT 			8	// different height is not even planned to be supported
+#define PSF_CHAR_WIDTH				8	// most of the code should be able to handle different width, although if you use any larger than 8 I advise setting PSD_VALIDATE_ARGS to true
 
-// A flag that makes shortens the extended ASCII (256 characters) to basic ASCII (128 characters), as this font is only 128 characrers big
-#define PSF_CHECK_STRING	0
+// A flag that compiles code shortens the extended ASCII (256 characters) to basic ASCII (128 characters), as this font is only 128 characrers big
+// We set it to 0 because we control all used values and this helps to make the code slightly faster
+#define PSF_CHECK_STRING			0
 
 
 #define PSF_CHAR_SELECTOR_LEFT		1
@@ -19,9 +20,15 @@
 #define PSF_CHAR_SELECTOR_BOTTOM	4
 
 
-// Make this by hand or through some different tool
-// We used https://www.min.at/prinz/o/software/pixelfont/ to generate this
-static unsigned char font[] = {
+/*
+	Make this by hand or through some different tool
+	We used https://www.min.at/prinz/o/software/pixelfont/ to generate this
+	
+	If you're using a proper c compiler remove static
+	
+	By C declarations this static modifier should PROVIDE linking errors, not remove them
+*/
+static const unsigned char font[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	// Char 000 (.)
 	0x00, 0x7E, 0x7E, 0x3C, 0x3C, 0x18, 0x18, 0x00,	// Char 001 (.)
 	0x00, 0x18, 0x18, 0x3C, 0x3C, 0x7E, 0x7E, 0x00,	// Char 002 (.)
