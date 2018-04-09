@@ -24,6 +24,7 @@ void interrupt_handler();
 
 /*
 	Sets up all necessary ports for the timer
+    Initializing the ports and such
 */
 void time_initialize();
 
